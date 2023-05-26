@@ -3,15 +3,15 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
+	survey "github.com/AlecAivazis/survey/v2"
 	adb "github.com/zach-klippenstein/goadb"
 )
 
 const (
-	ARG_INSTALL   string = "i"
-	ARG_UNINSTALL string = "u"
+	OPTION_INSTALL   string = "Install"
+	OPTION_UNINSTALL string = "Uninstall"
 )
 
 var (
@@ -27,21 +27,6 @@ var stimulatingApks = [4]string{
 	"com.android.chrome",
 	"com.google.android.youtube",
 	"com.google.android.apps.youtube.music",
-}
-
-func getInstallArg() (string, bool) {
-	if len(os.Args) <= 1 {
-		// return "", false TODO: Uncomment me
-		return ARG_INSTALL, true // TODO: Remove me
-	}
-
-	var arg string = os.Args[1]
-
-	if arg != ARG_INSTALL && arg != ARG_UNINSTALL {
-		return "", false
-	}
-
-	return arg, true
 }
 
 func uninstallApk(device *adb.Device, apk string) {
@@ -111,39 +96,35 @@ func getDevice(client *adb.Adb) *adb.Device {
 	return client.Device(deviceDescriptor)
 }
 
+var cliPrompt = &survey.Select{
+	Message: "Install or uninstall stimulating apps",
+	Options: []string{OPTION_INSTALL, OPTION_UNINSTALL},
+	Default: OPTION_INSTALL,
+}
+
 func main() {
-	fmt.Println("START")
-	arg, getArgSuccess = getInstallArg()
-
-	if !getArgSuccess {
-		log.Fatal("Please supply either the command line arguments 'i' or 'u' to install or uninstall stim apps")
-	}
-
 	client, err = adb.NewWithConfig(adb.ServerConfig{
 		PathToAdb: "./adb",
 		Port:      port,
 	})
 
-	defer fmt.Println("END")
-	defer client.KillServer()
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	serverVersion, err := client.ServerVersion()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("ADB SERVER VERSION:", serverVersion)
 	var device *adb.Device = getDevice(client)
 
+	var cliAnswer string
+	err = survey.AskOne(cliPrompt, &cliAnswer)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	for _, apk := range stimulatingApks {
-		if arg == ARG_INSTALL {
+		if cliAnswer == OPTION_INSTALL {
 			installApk(device, apk)
 
-		} else if arg == ARG_UNINSTALL {
+		} else if cliAnswer == OPTION_UNINSTALL {
 			uninstallApk(device, apk)
 		}
 	}
