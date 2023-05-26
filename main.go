@@ -74,6 +74,43 @@ func installApk(device *adb.Device, apk string) {
 	}
 }
 
+func getDevice(client *adb.Adb) *adb.Device {
+	defer func() {
+		// var err error = recover().(error)
+		var rec = recover()
+		var err error
+		if rec != nil {
+			err = rec.(error)
+		}
+
+		if err != nil {
+			var errorMessage = err.Error()
+
+			if strings.Contains(errorMessage, "runtime error: index out of range [1] with length 1") {
+				log.Fatal("Failed to access device. It may not be in File Transfer mode")
+			} else {
+				log.Fatal(err)
+			}
+		}
+	}()
+
+	devices, err := client.ListDevices()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(devices) == 0 {
+		log.Fatal("No devices connected")
+	} else if len(devices) > 1 {
+		log.Fatal("More than one device connected")
+	}
+
+	deviceInfo := devices[0]
+	deviceDescriptor := adb.DeviceWithSerial(deviceInfo.Serial)
+	return client.Device(deviceDescriptor)
+}
+
 func main() {
 	fmt.Println("START")
 	arg, getArgSuccess = getInstallArg()
@@ -100,24 +137,7 @@ func main() {
 	}
 
 	fmt.Println("ADB SERVER VERSION:", serverVersion)
-
-	devices, err := client.ListDevices()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if len(devices) == 0 {
-		log.Fatal("No devices connected")
-	} else if len(devices) > 1 {
-		log.Fatal("More than one device connected")
-	}
-
-	deviceInfo := devices[0]
-	deviceDescriptor := adb.DeviceWithSerial(deviceInfo.Serial)
-	device := client.Device(deviceDescriptor)
-
-	fmt.Println("DEVICE:", deviceInfo.Model)
+	var device *adb.Device = getDevice(client)
 
 	for _, apk := range stimulatingApks {
 		if arg == ARG_INSTALL {
