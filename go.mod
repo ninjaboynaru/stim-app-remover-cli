@@ -1,4 +1,4 @@
-module stim-apps
+module stim-app-remover-cli
 
 go 1.20
 

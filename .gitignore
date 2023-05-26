@@ -1,5 +1,5 @@
 #Build files
-/build
+stim-app-remover-cli
 
 # Binaries for programs and plugins
 *.exe

@@ -1,3 +1,3 @@
 
 build:
-	go build -o build/stim-app-remover
+	go build -o ./stim-app-remover-cli
