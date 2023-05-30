@@ -1,6 +1,6 @@
 
 build:
-	go build -o ./stim-app-remover-cli
+	go build -o ./stim-apps-cli
 
 run:
-	./stim-app-remover-cli
+	./stim-apps-cli
